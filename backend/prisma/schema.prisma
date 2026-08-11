@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// NOTE: Prisma 7 no longer accepts `url` here — the connection string is read
+// from DATABASE_URL via prisma.config.ts (Migrate) and via the PrismaPg
+// adapter in src/lib/prisma.ts (Client).
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  SALES
+  WAREHOUSE
+  ACCOUNTS
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+  DISTRIBUTOR
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum ChallanStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id           String         @id @default(uuid())
+  name         String
+  mobile       String
+  email        String?
+  businessName String?
+  gstNumber    String?
+  type         CustomerType
+  address      String?
+  status       CustomerStatus @default(LEAD)
+  followUpDate DateTime?
+  notes        Note[]
+  challans     Challan[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([name])
+  @@index([mobile])
+  @@index([status, type])
+}
+
+model Note {
+  id         String   @id @default(uuid())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  text       String
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  sku           String          @unique
+  category      String?
+  unitPrice     Decimal         @db.Decimal(10, 2)
+  currentStock  Int             @default(0)
+  minStockAlert Int             @default(0)
+  location      String?
+  movements     StockMovement[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([name])
+  @@index([category])
+}
+
+model StockMovement {
+  id              String       @id @default(uuid())
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId       String
+  quantityChanged Int
+  type            MovementType
+  reason          String
+  createdBy       String
+  createdAt       DateTime     @default(now())
+
+  @@index([productId, createdAt])
+}
+
+model Challan {
+  id            String        @id @default(uuid())
+  challanNumber String        @unique
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customerId    String
+  items         ChallanItem[]
+  totalQuantity Int
+  status        ChallanStatus @default(DRAFT)
+  createdBy     String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+}
+
+model ChallanItem {
+  id          String  @id @default(uuid())
+  challan     Challan @relation(fields: [challanId], references: [id], onDelete: Cascade)
+  challanId   String
+  productId   String
+  productName String // snapshot — required by the brief
+  sku         String // snapshot
+  unitPrice   Decimal @db.Decimal(10, 2) // snapshot — price at time of sale
+  quantity    Int
+
+  @@index([challanId])
+}
