@@ -2,7 +2,6 @@
 
 A role-based ERP/CRM system for a wholesale/distribution business — customers, inventory, and sales challans, built for internal Sales, Warehouse, and Accounts teams.
 
----
 
 ## 🔑 Test Credentials
 
@@ -13,7 +12,6 @@ A role-based ERP/CRM system for a wholesale/distribution business — customers,
 | Warehouse | `warehouse@fundsroom.test` | `Ware@123` |
 | Accounts | `accounts@fundsroom.test` | `Acc@123` |
 
----
 
 ## 🧰 Tech Stack
 
@@ -23,7 +21,6 @@ A role-based ERP/CRM system for a wholesale/distribution business — customers,
 - **Frontend:** React (TypeScript), React Router, Axios, Framer Motion
 - **Deployment:** Vercel (frontend) · Render (backend) · Neon (PostgreSQL)
 
----
 
 ## 🏗️ How the Server Was Set Up
 
@@ -33,7 +30,6 @@ A role-based ERP/CRM system for a wholesale/distribution business — customers,
 - Central error-handling middleware returns consistent `{ error: string }` JSON with correct HTTP status codes across every endpoint
 - Role-based access enforced via reusable middleware (`authenticate` + `requireRole`) applied per-route, not per-page (so the API is secure even if someone bypasses the UI)
 
----
 
 ## 🔐 Environment Variables
 
@@ -53,7 +49,6 @@ cp .env.example .env
 # then fill in real values
 ```
 
----
 
 ## 💻 Running Locally
 
@@ -75,7 +70,6 @@ npm install
 npm run dev                 # runs on http://localhost:5173
 ```
 
----
 
 ## 🚀 Deployment
 
@@ -88,7 +82,7 @@ npm run dev                 # runs on http://localhost:5173
 - **Live Frontend:** `[TODO — add after Phase 10]`
 - **Live Backend:** `[TODO — add after Phase 10]`
 
----
+
 
 ## 🏛️ Architecture
 
@@ -97,7 +91,6 @@ npm run dev                 # runs on http://localhost:5173
 - **Atomic stock operations:** confirming or cancelling a challan runs inside a Prisma `$transaction`, re-checking live stock at confirm time — preventing two near-simultaneous confirms from both passing a stale stock check and pushing inventory negative.
 - **Role enforcement at the API layer**, not just hidden in the UI — `requireRole()` middleware guards every write route, so permissions hold even if someone calls the API directly.
 
----
 
 ## ⚠️ Assumptions Made
 
@@ -106,7 +99,6 @@ npm run dev                 # runs on http://localhost:5173
 - Stock movement rows are created automatically by the system (challan confirm/cancel, or a manual Warehouse stock adjustment) — never edited directly, to preserve an accurate audit trail
 - Challan numbers are generated sequentially in-app (e.g. `CH-2026-0001`), not user-entered
 
----
 
 ## 🚧 Known Limitations / Incomplete Parts
 
@@ -115,7 +107,6 @@ npm run dev                 # runs on http://localhost:5173
 - `[ ]` Bonus features not implemented: Docker setup, GitHub Actions CI, PDF invoice export, S3 product image upload
 - `[ ]` `[Add anything you scope-cut as you go]`
 
----
 
 ## 📼 Submission Assets
 

@@ -1,34 +1,11 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import { uniqueConstraintFields } from '../utils/prismaError';
 
 interface ErrorBody {
   error: string;
-}
-
-/**
- * Digs the offending field names out of a P2002.
- *
- * Under Prisma 7's driver adapters they live on the wrapped driver error;
- * `meta.target` is the pre-7 shape, kept as a fallback.
- */
-function conflictFields(meta: Record<string, unknown> | undefined): string | null {
-  const adapterError = meta?.['driverAdapterError'] as
-    | { cause?: { constraint?: { fields?: unknown } } }
-    | undefined;
-
-  const fields = adapterError?.cause?.constraint?.fields;
-
-  if (Array.isArray(fields) && fields.length > 0) {
-    return fields.join(', ');
-  }
-
-  const target = meta?.['target'];
-
-  if (Array.isArray(target) && target.length > 0) return target.join(', ');
-  if (typeof target === 'string' && target) return target;
-
-  return null;
+  [key: string]: unknown;
 }
 
 /** Maps the Prisma error codes we actually expect onto sane HTTP statuses. */
@@ -37,10 +14,10 @@ function mapPrismaError(err: unknown): AppError | null {
     switch (err.code) {
       // Unique constraint failed on the given field(s).
       case 'P2002': {
-        const fields = conflictFields(err.meta);
+        const fields = uniqueConstraintFields(err.meta);
         return AppError.conflict(
           fields
-            ? `A record with this ${fields} already exists`
+            ? `A record with this ${fields.join(', ')} already exists`
             : 'A record with these values already exists',
         );
       }
@@ -86,7 +63,12 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   const appError = err instanceof AppError ? err : mapPrismaError(err);
 
   if (appError) {
-    res.status(appError.statusCode).json({ error: appError.message } satisfies ErrorBody);
+    // `details` is spread alongside `error` so a caller gets the machine-readable
+    // fields (stock shortages, say) in the same flat body as the message.
+    res.status(appError.statusCode).json({
+      error: appError.message,
+      ...appError.details,
+    } satisfies ErrorBody);
     return;
   }
 

@@ -8,13 +8,22 @@
 export class AppError extends Error {
   readonly statusCode: number;
 
+  /**
+   * Extra machine-readable fields merged into the response body alongside
+   * `error`, for failures a caller has to act on field by field — a stock
+   * shortage, say, where the client needs to show which lines are short and by
+   * how much. Omit it for ordinary failures: the message is enough.
+   */
+  readonly details?: Record<string, unknown>;
+
   /** Marks the error as an expected, safe-to-expose failure. */
   readonly isOperational = true;
 
-  constructor(statusCode: number, message: string) {
+  constructor(statusCode: number, message: string, details?: Record<string, unknown>) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;
+    this.details = details;
     Error.captureStackTrace(this, AppError);
   }
 
@@ -34,8 +43,8 @@ export class AppError extends Error {
     return new AppError(404, message);
   }
 
-  static conflict(message = 'Conflict'): AppError {
-    return new AppError(409, message);
+  static conflict(message = 'Conflict', details?: Record<string, unknown>): AppError {
+    return new AppError(409, message, details);
   }
 
   static notImplemented(message = 'Not implemented yet'): AppError {
