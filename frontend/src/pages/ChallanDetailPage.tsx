@@ -6,6 +6,7 @@ import { Modal } from '../components/Overlay';
 import { useSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useFetch } from '../hooks/useFetch';
+import { notifyStatsChanged } from '../hooks/useDashboardStats';
 import { api, errorBody, errorMessage, statusOf } from '../lib/api';
 import { challanTone, formatDateTime, formatMoney, titleCase } from '../lib/format';
 import { canWriteChallans } from '../lib/permissions';
@@ -35,6 +36,8 @@ export default function ChallanDetailPage() {
       await api.put(`/challans/${id}/confirm`);
       push({ tone: 'success', title: 'Challan confirmed', body: 'Stock has been deducted.' });
       detail.reload();
+      // DRAFT -> CONFIRMED, and the deduction may trip a low-stock threshold.
+      notifyStatsChanged();
     } catch (err) {
       const body = errorBody<InsufficientStockBody>(err);
 
@@ -70,6 +73,7 @@ export default function ChallanDetailPage() {
         body: wasConfirmed ? 'Stock has been returned.' : undefined,
       });
       detail.reload();
+      notifyStatsChanged();
     } catch (err) {
       push({ tone: 'error', title: 'Could not cancel', body: errorMessage(err) });
     } finally {

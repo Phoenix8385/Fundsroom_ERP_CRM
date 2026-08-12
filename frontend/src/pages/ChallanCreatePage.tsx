@@ -6,6 +6,7 @@ import { PageHeader } from '../components/Layout';
 import { useSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useFetch } from '../hooks/useFetch';
+import { notifyStatsChanged } from '../hooks/useDashboardStats';
 import { api, errorMessage } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { canWriteChallans } from '../lib/permissions';
@@ -245,6 +246,7 @@ export default function ChallanCreatePage() {
       });
 
       push({ tone: 'success', title: `Challan ${data.challanNumber} saved as draft` });
+      notifyStatsChanged();
       navigate(`/challans/${data.id}`, { replace: true });
     } catch (err) {
       setFormError(errorMessage(err, 'Could not save the challan'));

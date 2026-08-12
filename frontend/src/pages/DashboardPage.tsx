@@ -1,57 +1,47 @@
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/Layout';
-import { Badge, Spinner } from '../components/Feedback';
+import { Badge } from '../components/Feedback';
 import { useSession } from '../context/AuthContext';
-import { useFetch } from '../hooks/useFetch';
-import { api } from '../lib/api';
+import { STAT_CARDS, useDashboardStats } from '../hooks/useDashboardStats';
 import { canWriteChallans, canWriteCustomers, canWriteProducts, isReadOnly } from '../lib/permissions';
-import type { Paginated } from '../types/api';
-
-/** A count is just `total` from any list endpoint with the smallest page. */
-function useCount(path: string, params: Record<string, string | number> = {}) {
-  return useFetch(
-    async (signal) => {
-      const { data } = await api.get<Paginated<unknown>>(path, {
-        params: { pageSize: 1, ...params },
-        signal,
-      });
-      return data.total;
-    },
-    [path, JSON.stringify(params)],
-  );
-}
 
 function StatCard({
   label,
-  value,
+  count,
   loading,
+  refreshing,
   to,
   tone,
 }: {
   label: string;
-  value: number | null;
+  count: number | null;
   loading: boolean;
+  refreshing: boolean;
   to: string;
   tone?: 'warning';
 }) {
   return (
     <Link to={to} className={`stat${tone ? ` stat--${tone}` : ''}`}>
       <span className="stat__label">{label}</span>
-      <span className="stat__value">
-        {loading ? <Spinner label={`Loading ${label}`} /> : (value ?? '—')}
+      <span className={`stat__value${refreshing ? ' stat__value--refreshing' : ''}`}>
+        {loading ? (
+          <span className="skeleton-cell stat__skeleton" aria-hidden="true" />
+        ) : count === null ? (
+          // One failed request must not take the page down with it.
+          <span className="stat__unavailable" title={`Could not load ${label.toLowerCase()}`}>
+            —
+          </span>
+        ) : (
+          count
+        )}
       </span>
     </Link>
   );
 }
 
 export default function DashboardPage() {
-  const session = useSession();
-  const { role, name } = session;
-
-  const customers = useCount('/customers');
-  const products = useCount('/products');
-  const lowStock = useCount('/products', { lowStockOnly: 'true' });
-  const draftChallans = useCount('/challans', { status: 'DRAFT' });
+  const { role, name } = useSession();
+  const { counts, loading, refreshing } = useDashboardStats();
 
   const quickActions = [
     canWriteCustomers(role) && { to: '/customers?new=1', label: 'Add customer' },
@@ -66,22 +56,18 @@ export default function DashboardPage() {
         subtitle="Here is where things stand today."
       />
 
-      <section className="stat-grid">
-        <StatCard label="Customers" value={customers.data} loading={customers.loading} to="/customers" />
-        <StatCard label="Products" value={products.data} loading={products.loading} to="/products" />
-        <StatCard
-          label="Low on stock"
-          value={lowStock.data}
-          loading={lowStock.loading}
-          to="/products?lowStockOnly=true"
-          tone="warning"
-        />
-        <StatCard
-          label="Draft challans"
-          value={draftChallans.data}
-          loading={draftChallans.loading}
-          to="/challans?status=DRAFT"
-        />
+      <section className="stat-grid" aria-busy={loading || refreshing}>
+        {STAT_CARDS.map((card) => (
+          <StatCard
+            key={card.key}
+            label={card.label}
+            to={card.to}
+            tone={card.tone}
+            loading={loading}
+            refreshing={refreshing}
+            count={counts?.[card.key] ?? null}
+          />
+        ))}
       </section>
 
       <section className="panel">

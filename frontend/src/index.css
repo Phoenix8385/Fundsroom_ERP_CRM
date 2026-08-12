@@ -1,6 +1,54 @@
 /* --- tokens ------------------------------------------------------------- */
 
+/**
+ * Dark is the product's own theme, not a response to the OS.
+ *
+ * This used to key off `prefers-color-scheme`, which meant the same build
+ * showed a near-white panel to anyone whose machine was set to light — jarring
+ * next to the navy sign-in hero, and not the warehouse-console look the palette
+ * was chosen for. The light values are kept below behind an explicit opt-in, so
+ * a theme toggle is a small change rather than a rewrite.
+ */
 :root {
+  --bg: #101215;
+  --surface: #181b1f;
+  --surface-2: #202429;
+  --border: #2c3138;
+  --border-strong: #3d444d;
+  --text: #e9edf2;
+  --text-muted: #99a2ad;
+  --accent: #7d9bff;
+  --accent-hover: #97afff;
+  --accent-soft: #1c2740;
+  --success: #4ecfa1;
+  --success-soft: #14302a;
+  --warning: #e5a552;
+  --warning-soft: #362715;
+  --danger: #f08279;
+  --danger-soft: #38201f;
+  --info: #7d9bff;
+  --info-soft: #1c2740;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 45%);
+
+  /* Brand palette — warehouse and logistics, not a generic SaaS gradient.
+     Fixed across themes: the hero panel is always navy. */
+  --navy: #14213D;
+  --navy-deep: #0A1730;
+  --teal: #0C7C82;
+  --amber: #B8720B;
+
+  --radius: 10px;
+  --radius-sm: 7px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* Stops form controls and scrollbars rendering as light-mode widgets. */
+  color-scheme: dark;
+}
+
+/* Opt-in only: set data-theme="light" on <html> to use it. Nothing sets this
+   today, so the OS setting no longer flips the app. */
+:root[data-theme='light'] {
   --bg: #f6f7f9;
   --surface: #ffffff;
   --surface-2: #f2f4f7;
@@ -19,42 +67,8 @@
   --danger-soft: #fbe9e8;
   --info: #2f5bea;
   --info-soft: #e8eefd;
-  /* Brand palette — warehouse and logistics, not a generic SaaS gradient.
-     Fixed in both themes: the hero panel is always navy. */
-  --navy: #14213D;
-  --navy-deep: #0A1730;
-  --teal: #0C7C82;
-  --amber: #B8720B;
-
-  --radius: 10px;
-  --radius-sm: 7px;
   --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 8px 24px rgb(16 24 40 / 8%);
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101215;
-    --surface: #181b1f;
-    --surface-2: #202429;
-    --border: #2c3138;
-    --border-strong: #3d444d;
-    --text: #e9edf2;
-    --text-muted: #99a2ad;
-    --accent: #7d9bff;
-    --accent-hover: #97afff;
-    --accent-soft: #1c2740;
-    --success: #4ecfa1;
-    --success-soft: #14302a;
-    --warning: #e5a552;
-    --warning-soft: #362715;
-    --danger: #f08279;
-    --danger-soft: #38201f;
-    --info: #7d9bff;
-    --info-soft: #1c2740;
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 45%);
-  }
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -319,8 +333,38 @@ textarea.input { resize: vertical; }
 
 .stat:hover { border-color: var(--border-strong); }
 .stat__label { font-size: 0.8rem; color: var(--text-muted); }
-.stat__value { font-size: 1.75rem; font-weight: 620; letter-spacing: -0.02em; }
+.stat__value {
+  font-size: 1.75rem;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  /* Reserves the number's height so a card does not resize when its count
+     lands, which would jolt the whole grid as the four responses arrive. */
+  min-height: 2.1rem;
+  display: flex;
+  align-items: center;
+}
+
 .stat--warning .stat__value { color: var(--warning); }
+
+.stat__skeleton { height: 22px; width: 48px; border-radius: 6px; }
+
+/**
+ * Re-reading a count that is already on screen. The old number stays legible
+ * while it dims, so the card reads as "updating" rather than swapping silently
+ * — and unlike a skeleton, nothing shifts position.
+ */
+.stat__value--refreshing {
+  opacity: 0.4;
+  transition: opacity 140ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat__value--refreshing { transition: none; }
+}
+
+/* A count that failed to load — muted, so it reads as "unknown" rather than
+   being mistaken for a real value. */
+.stat__unavailable { color: var(--text-muted); }
 
 .quick-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 

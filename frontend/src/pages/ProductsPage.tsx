@@ -7,6 +7,7 @@ import { Drawer, Modal, Pagination } from '../components/Overlay';
 import { useSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useFetch } from '../hooks/useFetch';
+import { notifyStatsChanged } from '../hooks/useDashboardStats';
 import { api, errorMessage } from '../lib/api';
 import { formatDateTime, formatMoney } from '../lib/format';
 import { canWriteProducts } from '../lib/permissions';
@@ -244,6 +245,7 @@ export default function ProductsPage() {
           onSaved={() => {
             push({ tone: 'success', title: 'Product added' });
             list.reload();
+            notifyStatsChanged();
           }}
         />
       ) : null}
@@ -267,6 +269,8 @@ export default function ProductsPage() {
           onSaved={(newStock) => {
             push({ tone: 'success', title: 'Stock updated', body: `${adjusting.name} is now at ${newStock}.` });
             list.reload();
+            // An adjustment can push a product across its low-stock threshold.
+            notifyStatsChanged();
           }}
         />
       ) : null}

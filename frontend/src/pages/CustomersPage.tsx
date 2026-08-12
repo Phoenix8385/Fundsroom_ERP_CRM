@@ -7,6 +7,7 @@ import { Drawer, Modal, Pagination } from '../components/Overlay';
 import { useSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useFetch } from '../hooks/useFetch';
+import { notifyStatsChanged } from '../hooks/useDashboardStats';
 import { api, errorMessage } from '../lib/api';
 import { challanTone, customerTone, formatDate, formatDateTime, titleCase } from '../lib/format';
 import { canWriteCustomers } from '../lib/permissions';
@@ -249,6 +250,7 @@ export default function CustomersPage() {
           onSaved={() => {
             push({ tone: 'success', title: 'Customer added' });
             list.reload();
+            notifyStatsChanged();
           }}
         />
       ) : null}
