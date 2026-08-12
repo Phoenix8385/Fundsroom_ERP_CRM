@@ -36,6 +36,7 @@ const SEED_USERS: ReadonlyArray<{
 ];
 
 function createPrismaClient(): PrismaClient {
+  const source = process.env.DIRECT_DATABASE_URL ? 'DIRECT_DATABASE_URL' : 'DATABASE_URL';
   const connectionString = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -48,6 +49,11 @@ function createPrismaClient(): PrismaClient {
         'postgres:// URL printed by `npx prisma dev`.',
     );
   }
+
+  // Announced up front because DIRECT_DATABASE_URL silently wins over
+  // DATABASE_URL: without this, a seed aimed at the wrong database still prints
+  // "Seeded 4 users" and looks like it worked.
+  console.log(`Seeding ${new URL(connectionString).host} (from ${source})`);
 
   return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 }
